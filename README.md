@@ -1,5 +1,8 @@
 # India E-Waste Growth Analytics & Circularity Assessment
 
+> 🌐 **Live Web Application:** [https://india-ewaste-analytics-rukaryjpzq4futpejbkf3v.streamlit.app](https://india-ewaste-analytics-rukaryjpzq4futpejbkf3v.streamlit.app)  
+> [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://india-ewaste-analytics-rukaryjpzq4futpejbkf3v.streamlit.app)
+
 An interactive data analytics platform investigating electronic waste accumulation, regional growth trajectories, municipal infrastructure bottlenecks, and peer group benchmarking across Indian urban centers (2015–2026).
 
 **Academic Attribution:**
@@ -8,6 +11,7 @@ An interactive data analytics platform investigating electronic waste accumulati
 * **Rudra Jain** — Roll No: `24101C0062`
 * **Department:** Department of Information Technology
 * **Batch:** INFT-C Batch 3
+* **Live Deployment:** [india-ewaste-analytics-rukaryjpzq4futpejbkf3v.streamlit.app](https://india-ewaste-analytics-rukaryjpzq4futpejbkf3v.streamlit.app)
 * **Repository:** [https://github.com/rujopujo/india-ewaste-analytics](https://github.com/rujopujo/india-ewaste-analytics)
 
 ---
@@ -137,7 +141,11 @@ india-ewaste-analytics/
 
 ## Cloud Deployment Guide
 
-The application is configured for deployment on **Streamlit Community Cloud**:
+The application is deployed and live on **Streamlit Community Cloud**:
+
+> 🌐 **Live Web App:** [https://india-ewaste-analytics-rukaryjpzq4futpejbkf3v.streamlit.app](https://india-ewaste-analytics-rukaryjpzq4futpejbkf3v.streamlit.app)
+
+### Re-deploying or Hosting Your Own Instance:
 
 1. Host the repository on GitHub under a public repository.
 2. Sign in to [share.streamlit.io](https://share.streamlit.io) via GitHub authentication.
