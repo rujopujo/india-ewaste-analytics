@@ -5,20 +5,21 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import altair as alt
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # ==============================================================================
-# PAGE CONFIGURATION & ECO-FRIENDLY AESTHETICS
+# PRO TIP 1: PAGE CONFIGURATION & METADATA
 # ==============================================================================
 st.set_page_config(
-    page_title="India E-Waste Growth Analytics & Circularity Dashboard",
-    page_icon="🌱",
+    page_title="India E-Waste Analytics & Peer Benchmarking",
+    page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for rich eco-friendly design system, micro-animations, and glassmorphic styling
+# Custom CSS for eco-friendly theme, fluid animations, and card hover lifts
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -40,13 +41,7 @@ st.markdown("""
         100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
-    @keyframes subtleFloat {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-4px); }
-        100% { transform: translateY(0px); }
-    }
-
-    /* Eco-Friendly Animated Header Banner */
+    /* Animated Header */
     .main-header {
         background: linear-gradient(135deg, #022c22 0%, #064e3b 25%, #047857 50%, #059669 75%, #10b981 100%);
         background-size: 250% 250%;
@@ -54,11 +49,9 @@ st.markdown("""
         padding: 2.3rem 2.6rem;
         border-radius: 20px;
         color: white;
-        margin-bottom: 2rem;
+        margin-bottom: 1.8rem;
         box-shadow: 0 14px 30px -6px rgba(5, 150, 105, 0.35);
         border: 1px solid rgba(52, 211, 153, 0.3);
-        position: relative;
-        overflow: hidden;
     }
     .main-header h1 {
         font-size: 2.35rem;
@@ -88,14 +81,14 @@ st.markdown("""
         font-size: 0.82rem;
         font-weight: 600;
         border: 1px solid rgba(255, 255, 255, 0.28);
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: all 0.25s ease;
     }
     .badge:hover {
         background: rgba(255, 255, 255, 0.28);
         transform: translateY(-2px);
     }
 
-    /* Live Eco-Status Tag */
+    /* Eco Status Tag */
     .eco-status-tag {
         display: inline-flex;
         align-items: center;
@@ -117,7 +110,7 @@ st.markdown("""
         border-radius: 50%;
     }
 
-    /* Interactive Metric Cards with Gradient Accent & Micro-Hover Lift */
+    /* Metric Cards with Border & Hover Lift */
     .metric-card {
         background: #ffffff;
         border: 1px solid rgba(16, 185, 129, 0.22);
@@ -137,15 +130,11 @@ st.markdown("""
         height: 4px;
         background: linear-gradient(90deg, #059669, #34d399);
         opacity: 0.8;
-        transition: height 0.25s ease;
     }
     .metric-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 16px 32px -6px rgba(5, 150, 105, 0.22);
         border-color: rgba(16, 185, 129, 0.5);
-    }
-    .metric-card:hover::before {
-        height: 6px;
     }
     .metric-label {
         font-size: 0.8rem;
@@ -170,7 +159,7 @@ st.markdown("""
     .delta-eco { color: #059669; }
     .delta-neutral { color: #0284c7; }
 
-    /* The Feynman Explanatory Container */
+    /* Feynman Box */
     .feynman-box {
         background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
         border-left: 5px solid #059669;
@@ -181,11 +170,6 @@ st.markdown("""
         border-top: 1px solid rgba(16, 185, 129, 0.15);
         border-bottom: 1px solid rgba(16, 185, 129, 0.15);
         border-right: 1px solid rgba(16, 185, 129, 0.15);
-    }
-    .feynman-box h4 {
-        color: #065f46;
-        font-weight: 700;
-        margin-top: 0;
     }
 
     /* Simulator Result Cards */
@@ -218,13 +202,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Custom color palette for Plotly figures
 ECO_PALETTE = ["#059669", "#10b981", "#34d399", "#0284c7", "#f59e0b", "#8b5cf6", "#ec4899", "#6366f1"]
 
 # ==============================================================================
-# DATA LOADING & PREPROCESSING (CACHED)
+# PRO TIP 2: CACHED DATA LOADING & ERROR RESILIENCE
 # ==============================================================================
-@st.cache_data(show_spinner=True)
+@st.cache_data(show_spinner="Loading Indian municipal environmental datasets...", ttl="12h")
 def load_and_preprocess_data():
     base_path = os.path.dirname(os.path.abspath(__file__))
     
@@ -250,15 +233,12 @@ def load_and_preprocess_data():
     wm_rec_df = pd.read_csv(path_recycling)
     wm_20k_df = pd.read_csv(path_20k)
     
-    # Standardize column headers
     for df in [cities_df, wm_rec_df, wm_20k_df]:
         df.columns = df.columns.str.strip()
         
-    # Harmonize City identifier
     if "City/District" in wm_rec_df.columns:
         wm_rec_df.rename(columns={"City/District": "City"}, inplace=True)
         
-    # Relational merge with cities_master for geospatial and regional flags
     combined_df = pd.merge(
         wm_20k_df,
         cities_df[["City", "State", "Is_Tourist", "Is_Hill_Station"]],
@@ -275,7 +255,20 @@ except Exception as e:
     st.stop()
 
 # ==============================================================================
-# SIDEBAR FILTERS & CONTROLS
+# PRO TIP 3: URL QUERY PARAM SYNCHRONIZATION & SESSION STATE
+# ==============================================================================
+DEFAULT_PEERS = ["Mumbai", "Delhi", "Bangalore", "Pune", "Kolkata"]
+
+# Read state from URL query params
+if "peer_cities" not in st.session_state:
+    url_peers = st.query_params.get("peers", None)
+    if url_peers:
+        st.session_state.peer_cities = [p.strip() for p in url_peers.split(",") if p.strip()]
+    else:
+        st.session_state.peer_cities = DEFAULT_PEERS
+
+# ==============================================================================
+# PRO TIP 4: MODERN CONTROLS IN SIDEBAR WITH ST.PILLS & SEGMENTED CONTROLS
 # ==============================================================================
 with st.sidebar:
     st.markdown("""
@@ -288,32 +281,45 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    analysis_mode = st.radio(
-        "Focus Dataset Scope",
-        options=["E-Waste Focus (Core Longitudinal Study)", "All Waste Classifications (Comparative)"],
-        index=0
+    # Modern Pills for Scope
+    analysis_mode = st.pills(
+        "Study Focus",
+        options=["E-Waste Focus", "All Waste Classes"],
+        default="E-Waste Focus"
     )
-    is_ewaste_only = "E-Waste Focus" in analysis_mode
+    is_ewaste_only = (analysis_mode == "E-Waste Focus")
     
     st.markdown("---")
     
-    # Year Range Slider
-    min_year = int(wm_20k_df["Year"].min())
-    max_year = int(wm_20k_df["Year"].max())
+    # Modern Time Horizon Pills
+    time_preset = st.pills(
+        "Quick Time Horizon",
+        options=["Full (2015-2026)", "Recent 5Y (2021-2026)", "Surge Era (2019-2022)"],
+        default="Full (2015-2026)"
+    )
+    
+    if time_preset == "Recent 5Y (2021-2026)":
+        init_years = (2021, 2026)
+    elif time_preset == "Surge Era (2019-2022)":
+        init_years = (2019, 2022)
+    else:
+        init_years = (2015, 2026)
+        
     selected_years = st.slider(
         "Observation Time Window",
-        min_value=min_year,
-        max_value=max_year,
-        value=(min_year, max_year),
+        min_value=2015,
+        max_value=2026,
+        value=init_years,
         step=1
     )
     
-    # Geographic Region Multi-select
+    # Region Multi-select
     all_regions = sorted(wm_20k_df["Region"].dropna().unique().tolist())
     selected_regions = st.multiselect(
         "Geographic Regions",
         options=all_regions,
-        default=all_regions
+        default=all_regions,
+        placeholder="Choose regions to include..."
     )
     
     # City Tier Filter
@@ -321,7 +327,8 @@ with st.sidebar:
     selected_categories = st.multiselect(
         "City Tiers",
         options=all_categories,
-        default=all_categories
+        default=all_categories,
+        placeholder="Choose city categories..."
     )
     
     # Waste Type Filter
@@ -339,6 +346,8 @@ with st.sidebar:
     view_static_plots = st.checkbox("Show Matplotlib/Seaborn plots as backup", value=False)
     
     if st.button("Reset All Filters", use_container_width=True):
+        st.query_params.clear()
+        st.session_state.peer_cities = DEFAULT_PEERS
         st.rerun()
 
 # Apply Filters
@@ -349,6 +358,11 @@ mask = (
     (wm_20k_df["Waste_Type"].isin(selected_waste_types))
 )
 filtered_20k = wm_20k_df[mask]
+
+# PRO TIP 5: DEFENSIVE GUARDRAIL WITH ST.STOP()
+if len(filtered_20k) == 0:
+    st.info("No data matches your active filter selection. Adjust the year slider or select at least one region.", icon=":material/info:")
+    st.stop()
 
 comb_mask = (
     (combined_df["Year"].between(selected_years[0], selected_years[1])) &
@@ -372,7 +386,7 @@ st.markdown("""
         Interactive Sustainability & Material Recovery Observatory
     </div>
     <h1>India E-Waste Growth Analytics</h1>
-    <p>An interactive data analytics platform analyzing electronic waste accumulation, regional growth trajectories, municipal infrastructure bottlenecks, and circular recovery potential across Indian urban centers.</p>
+    <p>An interactive data analytics platform analyzing electronic waste accumulation, peer city benchmarking, municipal infrastructure bottlenecks, and circular recovery potential across Indian urban centers.</p>
     <div class="badge-container">
         <span class="badge">Ruhaan Joshi (24101C0057)</span>
         <span class="badge">Om Thakur (24101C0041)</span>
@@ -385,85 +399,224 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# TOP-LEVEL KPI METRICS
+# PRO TIP 6: TOP METRICS WITH BORDERED CONTAINERS & SEMANTIC DELTAS
 # ==============================================================================
-col1, col2, col3, col4, col5 = st.columns(5)
-
 total_tonnage = filtered_20k["Daily_Waste_Generation_Tons"].sum()
-mean_daily = filtered_20k["Daily_Waste_Generation_Tons"].mean() if len(filtered_20k) > 0 else 0
-avg_collection = filtered_20k["Collection_Efficiency_Percentage"].mean() if len(filtered_20k) > 0 else 0
-avg_recycling = filtered_20k["Recycling_Rate"].mean() if len(filtered_20k) > 0 else 0
+mean_daily = filtered_20k["Daily_Waste_Generation_Tons"].mean()
+avg_collection = filtered_20k["Collection_Efficiency_Percentage"].mean()
+avg_recycling = filtered_20k["Recycling_Rate"].mean()
 
 ew_2015 = ew_20k[ew_20k["Year"] == 2015]["Daily_Waste_Generation_Tons"].sum()
 ew_2026 = ew_20k[ew_20k["Year"] == 2026]["Daily_Waste_Generation_Tons"].sum()
 cagr_val = ((ew_2026 / ew_2015) ** (1 / 11) - 1) * 100 if ew_2015 > 0 else 7.56
 
-with col1:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Cumulative Daily Tonnage</div>
-        <div class="metric-value">{total_tonnage:,.1f}</div>
-        <div class="metric-delta delta-up">Filtered Active Volume (Tons/Day)</div>
-    </div>
-    """, unsafe_allow_html=True)
+kpi_cols = st.columns(5)
 
-with col2:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Mean Daily Generation</div>
-        <div class="metric-value">{mean_daily:.2f} <span style="font-size:1rem;color:#64748b;">Tons</span></div>
-        <div class="metric-delta delta-neutral">Per Reporting Center</div>
-    </div>
-    """, unsafe_allow_html=True)
+with kpi_cols[0].container(border=True):
+    st.metric(
+        label="Cumulative Daily Volume",
+        value=f"{total_tonnage:,.1f} T/D",
+        delta="Filtered Active Volume",
+        delta_color="normal",
+        width="content"
+    )
 
-with col3:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">11-Year Growth (CAGR)</div>
-        <div class="metric-value">+{cagr_val:.2f}%</div>
-        <div class="metric-delta delta-up">2015 (770 T/D) → 2026 (1,716 T/D)</div>
-    </div>
-    """, unsafe_allow_html=True)
+with kpi_cols[1].container(border=True):
+    st.metric(
+        label="Mean Generation Rate",
+        value=f"{mean_daily:.2f} Tons",
+        delta="Per Reporting Center",
+        delta_color="off",
+        width="content"
+    )
 
-with col4:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Collection Efficiency</div>
-        <div class="metric-value">{avg_collection:.1f}%</div>
-        <div class="metric-delta delta-up">Stagnant Collection Ceiling</div>
-    </div>
-    """, unsafe_allow_html=True)
+with kpi_cols[2].container(border=True):
+    st.metric(
+        label="11-Year Growth (CAGR)",
+        value=f"+{cagr_val:.2f}%",
+        delta="770 T/D (2015) → 1,716 T/D (2026)",
+        delta_color="inverse",
+        width="content"
+    )
 
-with col5:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Formal Recycling Rate</div>
-        <div class="metric-value">{avg_recycling:.1f}%</div>
-        <div class="metric-delta delta-eco">>50% Informal Sector Leakage</div>
-    </div>
-    """, unsafe_allow_html=True)
+with kpi_cols[3].container(border=True):
+    st.metric(
+        label="Collection Efficiency",
+        value=f"{avg_collection:.1f}%",
+        delta="Stagnant Municipal Ceiling",
+        delta_color="inverse",
+        width="content"
+    )
+
+with kpi_cols[4].container(border=True):
+    st.metric(
+        label="Formal Recycling Rate",
+        value=f"{avg_recycling:.1f}%",
+        delta=">50% Informal Leakage Gap",
+        delta_color="normal",
+        width="content"
+    )
 
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ==============================================================================
-# MAIN TABS ARCHITECTURE
+# MAIN TABS ARCHITECTURE WITH MATERIAL ICONS
 # ==============================================================================
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
-    "Overview & Growth",
-    "Eco-Policy Simulator",
-    "Distributions & Outliers",
-    "Waste Composition",
-    "Regression & Trends",
-    "Correlation & Collinearity",
-    "Geospatial & City Inspector",
-    "Data Explorer & Export",
-    "Policy & Engineering"
+tab_peers, tab_overview, tab_sim, tab_univariate, tab_comp, tab_regression, tab_corr, tab_geo, tab_explorer, tab_notes = st.tabs([
+    ":material/compare_arrows: Peer Benchmarking",
+    ":material/query_stats: Overview & Growth",
+    ":material/eco: Eco-Policy Simulator",
+    ":material/bar_chart: Distributions & Outliers",
+    ":material/pie_chart: Waste Composition",
+    ":material/show_chart: Regression & Trends",
+    ":material/grid_on: Correlation Heatmap",
+    ":material/map: Geospatial & City Audit",
+    ":material/table_view: Data Explorer",
+    ":material/policy: Policy & Engineering"
 ])
 
 # ------------------------------------------------------------------------------
-# TAB 1: OVERVIEW & E-WASTE GROWTH TRENDS
+# PRO TIP 7: SIGNATURE PEER BENCHMARKING ENGINE (FANILO'S PRO METHOD)
 # ------------------------------------------------------------------------------
-with tab1:
+with tab_peers:
+    st.markdown("""
+    ### :material/compare: Normalized Peer Group Comparison
+    Easily compare e-waste trajectories between Indian cities. Examine relative growth indexed to baseline, or compare each city against the average of all other selected peers.
+    """)
+    
+    top_peer_cols = st.columns([1, 2])
+    
+    with top_peer_cols[0].container(border=True):
+        all_avail_cities = sorted(wm_20k_df["City"].dropna().unique().tolist())
+        selected_peers = st.multiselect(
+            "Select Cities for Peer Analysis:",
+            options=all_avail_cities,
+            default=[c for c in st.session_state.peer_cities if c in all_avail_cities],
+            placeholder="Pick 2 or more cities (e.g. Mumbai, Delhi)..."
+        )
+        
+        # PRO TIP: Sync selected peers to URL query params
+        if selected_peers:
+            st.query_params["peers"] = ",".join(selected_peers)
+            st.session_state.peer_cities = selected_peers
+        else:
+            st.query_params.pop("peers", None)
+            
+        metric_choice = st.pills(
+            "Benchmarking Metric",
+            options=["Daily E-Waste (Tons)", "Collection Efficiency (%)", "Formal Recycling Rate (%)"],
+            default="Daily E-Waste (Tons)"
+        )
+        
+        metric_map = {
+            "Daily E-Waste (Tons)": "Daily_Waste_Generation_Tons",
+            "Collection Efficiency (%)": "Collection_Efficiency_Percentage",
+            "Formal Recycling Rate (%)": "Recycling_Rate"
+        }
+        active_metric_col = metric_map[metric_choice]
+        
+    if len(selected_peers) < 2:
+        top_peer_cols[1].info("Please select at least 2 cities to perform peer group benchmarking.", icon=":material/info:")
+        st.stop()
+        
+    # Build peer comparison dataframe
+    peer_raw = ew_20k[ew_20k["City"].isin(selected_peers)]
+    peer_agg = peer_raw.groupby(["Year", "City"])[active_metric_col].mean().reset_index()
+    
+    # Pivot into Year x City matrix
+    peer_pivot = peer_agg.pivot(index="Year", columns="City", values=active_metric_col).ffill().bfill()
+    
+    # Normalize (start at 1.0 at first year)
+    peer_norm = peer_pivot.div(peer_pivot.iloc[0])
+    
+    with top_peer_cols[1].container(border=True):
+        st.markdown(f"**Indexed Relative Growth (Normalized to 1.0 Baseline at {peer_pivot.index[0]}):**")
+        norm_melted = peer_norm.reset_index().melt(id_vars=["Year"], var_name="City", value_name="Normalized Growth")
+        
+        fig_norm = px.line(
+            norm_melted,
+            x="Year",
+            y="Normalized Growth",
+            color="City",
+            markers=True,
+            color_discrete_sequence=ECO_PALETTE,
+            title="<b>Relative Acceleration (Starting Year = 1.0)</b>"
+        )
+        fig_norm.update_layout(
+            height=320,
+            margin=dict(l=20, r=20, t=40, b=20),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)"
+        )
+        st.plotly_chart(fig_norm, use_container_width=True)
+        
+    st.markdown("---")
+    
+    # PRO TIP: Individual City vs Peer Average (Excluding the City Itself)
+    st.markdown("#### Individual Cities vs Peer Average")
+    st.caption("For each city below, the peer average represents the mean of all other selected cities, excluding the city itself.")
+    
+    peer_chart_cols = st.columns(min(len(selected_peers), 3))
+    
+    for idx, city in enumerate(selected_peers):
+        col_target = peer_chart_cols[idx % len(peer_chart_cols)]
+        
+        # Calculate peer average (excluding current city)
+        other_peers = peer_pivot.drop(columns=[city])
+        peer_avg = other_peers.mean(axis=1)
+        
+        city_series = peer_pivot[city]
+        delta_series = city_series - peer_avg
+        
+        chart_df = pd.DataFrame({
+            "Year": peer_pivot.index,
+            city: city_series,
+            "Peer Average": peer_avg,
+            "Delta": delta_series
+        })
+        
+        with col_target.container(border=True):
+            st.markdown(f"**{city} vs Peer Group**")
+            
+            # City vs Peer Line Chart
+            melted_comp = chart_df.melt(id_vars=["Year"], value_vars=[city, "Peer Average"], var_name="Entity", value_name="Value")
+            fig_comp = px.line(
+                melted_comp,
+                x="Year",
+                y="Value",
+                color="Entity",
+                color_discrete_map={city: "#059669", "Peer Average": "#94a3b8"},
+                markers=True
+            )
+            fig_comp.update_layout(
+                height=240,
+                margin=dict(l=10, r=10, t=25, b=10),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)"
+            )
+            st.plotly_chart(fig_comp, use_container_width=True)
+            
+            # Delta Area Chart
+            fig_delta = px.area(
+                chart_df,
+                x="Year",
+                y="Delta",
+                title=f"Delta: {city} minus Peer Average",
+                color_discrete_sequence=["#10b981" if delta_series.iloc[-1] >= 0 else "#f59e0b"]
+            )
+            fig_delta.update_layout(
+                height=180,
+                margin=dict(l=10, r=10, t=35, b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)"
+            )
+            st.plotly_chart(fig_delta, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# TAB 2: OVERVIEW & GROWTH
+# ------------------------------------------------------------------------------
+with tab_overview:
     st.markdown("### Longitudinal E-Waste Growth Trajectory (2015 – 2026)")
     
     yearly_stats = ew_20k.groupby("Year").agg(
@@ -478,7 +631,7 @@ with tab1:
     
     c1, c2 = st.columns([7, 5])
     
-    with c1:
+    with c1.container(border=True):
         fig_trend = make_subplots(specs=[[{"secondary_y": True}]])
         
         fig_trend.add_trace(
@@ -518,13 +671,13 @@ with tab1:
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             hovermode="x unified",
             margin=dict(l=40, r=40, t=60, b=40),
-            height=430,
+            height=400,
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)"
         )
         st.plotly_chart(fig_trend, use_container_width=True)
         
-    with c2:
+    with c2.container(border=True):
         state_ew = ew_20k.groupby("State")["Daily_Waste_Generation_Tons"].agg(["sum", "mean"]).sort_values(by="sum", ascending=True).tail(8)
         fig_state = px.bar(
             state_ew,
@@ -533,11 +686,11 @@ with tab1:
             orientation="h",
             color="sum",
             color_continuous_scale=[[0, "#a7f3d0"], [0.5, "#10b981"], [1, "#064e3b"]],
-            title="<b>Top E-Waste Generating States (Cumulative Daily Tons)</b>",
+            title="<b>Top E-Waste Generating States</b>",
             labels={"sum": "Total Daily Tons", "State": "State"}
         )
         fig_state.update_layout(
-            height=430,
+            height=400,
             margin=dict(l=20, r=20, t=60, b=40),
             coloraxis_showscale=False,
             paper_bgcolor="rgba(0,0,0,0)",
@@ -545,7 +698,6 @@ with tab1:
         )
         st.plotly_chart(fig_state, use_container_width=True)
         
-    # Feynman Concept Card
     st.markdown("""
     <div class="feynman-box">
         <h4>The Feynman Framework: The "One-Way Conveyor Belt" Dilemma</h4>
@@ -566,40 +718,17 @@ with tab1:
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    with st.expander("View Detailed Longitudinal E-Waste Metrics (2015 - 2026)"):
-        display_yearly = yearly_stats.rename(columns={
-            "Year": "Year",
-            "records": "Observations Count",
-            "total_daily_tons": "Total Daily (Tons)",
-            "mean_daily_tons": "Mean Daily (Tons)",
-            "median_daily_tons": "Median Daily (Tons)",
-            "recycling_rate": "Recycling Rate (%)",
-            "collection_eff": "Collection Eff (%)",
-            "budget": "Mean Municipal Budget (INR)"
-        })
-        st.dataframe(
-            display_yearly.style.format({
-                "Total Daily (Tons)": "{:,.2f}",
-                "Mean Daily (Tons)": "{:.2f}",
-                "Median Daily (Tons)": "{:.2f}",
-                "Recycling Rate (%)": "{:.1f}%",
-                "Collection Eff (%)": "{:.1f}%",
-                "Mean Municipal Budget (INR)": "₹{:,.0f}"
-            }),
-            use_container_width=True
-        )
 
 # ------------------------------------------------------------------------------
-# TAB 2: INTERACTIVE ECO-POLICY SIMULATOR & CIRCULAR ECONOMY CALCULATOR
+# TAB 3: ECO-POLICY SIMULATOR
 # ------------------------------------------------------------------------------
-with tab2:
+with tab_sim:
     st.markdown("### Interactive Circularity & Resource Recovery Policy Simulator")
     st.caption("Simulate policy interventions (EPR take-backs, informal buyback incentives, hydrometallurgical recycling targets) to project recovered materials, toxic leak prevention, and CO₂ abatement.")
     
     sim_col1, sim_col2 = st.columns([5, 7])
     
-    with sim_col1:
+    with sim_col1.container(border=True):
         st.markdown("#### Policy Target Controls")
         
         baseline_col = 51.0
@@ -610,8 +739,7 @@ with tab2:
             min_value=50,
             max_value=95,
             value=75,
-            step=1,
-            help="Percentage of generated electronic waste successfully aggregated into authorized municipal channels."
+            step=1
         )
         
         sim_rec_target = st.slider(
@@ -619,8 +747,7 @@ with tab2:
             min_value=40,
             max_value=90,
             value=70,
-            step=1,
-            help="Percentage of collected e-waste dismantled via certified zero-emission recovery facilities."
+            step=1
         )
         
         sim_incentive = st.select_slider(
@@ -629,38 +756,24 @@ with tab2:
             value="Tier 2 (₹35/kg)"
         )
         
-        st.info("💡 **Did You Know?** 1 metric ton of discarded printed circuit boards contains up to 800x more gold than 1 ton of raw mined gold ore. Capturing this urban mine cuts heavy metal poisoning and avoids virgin extraction.")
-        
-    # Empirical calculation model
     active_daily_tonnage = ew_20k[ew_20k["Year"] == 2026]["Daily_Waste_Generation_Tons"].sum()
     if active_daily_tonnage <= 0:
         active_daily_tonnage = 1716.08
         
-    # Baseline vs Target
     baseline_collected_daily = active_daily_tonnage * (baseline_col / 100.0)
     sim_collected_daily = active_daily_tonnage * (sim_col_target / 100.0)
     
-    annual_diverted_tons = (sim_collected_daily - baseline_collected_daily) * 365
-    annual_diverted_tons = max(0, annual_diverted_tons)
-    
-    # Heavy metal prevention (~2% lead, mercury, cadmium, arsenic)
+    annual_diverted_tons = max(0, (sim_collected_daily - baseline_collected_daily) * 365)
     heavy_metals_prevented_tons = annual_diverted_tons * 0.02
-    
-    # CO2 saved (1.44 tons CO2-eq saved per ton formally recycled)
     co2_saved_tons = annual_diverted_tons * 1.44
-    
-    # Economic mineral recovery value (estimate ~₹2.8 Lakhs/ton mixed e-waste via hydrometallurgy)
     recovered_value_cr = (annual_diverted_tons * (sim_rec_target / 100.0) * 280000) / 10000000
     
-    # Critical metal yield
     recovered_copper_tons = annual_diverted_tons * 0.15 * (sim_rec_target / 100.0)
     recovered_gold_kg = annual_diverted_tons * 0.00005 * 1000 * (sim_rec_target / 100.0)
     
-    # Circularity Index Score (0 to 100)
     circularity_index = (sim_col_target * 0.5) + (sim_rec_target * 0.5)
     
-    with sim_col2:
-        # Circularity Gauge Chart
+    with sim_col2.container(border=True):
         fig_gauge = go.Figure(go.Indicator(
             mode="gauge+number+delta",
             value=circularity_index,
@@ -685,53 +798,21 @@ with tab2:
                 }
             }
         ))
-        fig_gauge.update_layout(height=280, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
+        fig_gauge.update_layout(height=260, margin=dict(l=20, r=20, t=30, b=20), paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_gauge, use_container_width=True)
         
     st.markdown("---")
-    st.markdown("#### Projected Annual Eco-Impact & Material Recovery")
+    s_cols = st.columns(4)
     
-    s_col1, s_col2, s_col3, s_col4 = st.columns(4)
-    
-    with s_col1:
-        st.markdown(f"""
-        <div class="sim-card">
-            <div class="sim-lbl">Annual Landfill Diversion</div>
-            <div class="sim-val">+{annual_diverted_tons:,.0f}</div>
-            <span style="font-size:0.75rem; color:#059669; font-weight:700;">Metric Tons Rescued/Year</span>
-        </div>
-        """, unsafe_allow_html=True)
+    with s_cols[0].container(border=True):
+        st.metric("Annual Diversion", f"+{annual_diverted_tons:,.0f} Tons", "Rescued from open dumps", delta_color="normal")
+    with s_cols[1].container(border=True):
+        st.metric("Toxins Contained", f"{heavy_metals_prevented_tons:,.1f} Tons", "Lead & Mercury safely managed", delta_color="inverse")
+    with s_cols[2].container(border=True):
+        st.metric("Recovered Value", f"₹{recovered_value_cr:,.1f} Cr", "Critical mineral value", delta_color="normal")
+    with s_cols[3].container(border=True):
+        st.metric("CO₂ Emissions Avoided", f"{co2_saved_tons:,.0f} Tons", "Virgin mining avoided", delta_color="normal")
         
-    with s_col2:
-        st.markdown(f"""
-        <div class="sim-card">
-            <div class="sim-lbl">Toxic Metals Prevented</div>
-            <div class="sim-val">{heavy_metals_prevented_tons:,.1f}</div>
-            <span style="font-size:0.75rem; color:#dc2626; font-weight:700;">Tons Lead & Mercury Contained</span>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with s_col3:
-        st.markdown(f"""
-        <div class="sim-card">
-            <div class="sim-lbl">Recovered Materials Value</div>
-            <div class="sim-val">₹{recovered_value_cr:,.1f} Cr</div>
-            <span style="font-size:0.75rem; color:#d97706; font-weight:700;">Precious & Base Metals Yield</span>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with s_col4:
-        st.markdown(f"""
-        <div class="sim-card">
-            <div class="sim-lbl">CO₂ Abatement</div>
-            <div class="sim-val">{co2_saved_tons:,.0f}</div>
-            <span style="font-size:0.75rem; color:#0284c7; font-weight:700;">Tons CO₂e Virgin Mining Avoided</span>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Material Recovery Breakdown Chart
     metals_df = pd.DataFrame({
         "Critical_Material": ["Copper (Tons)", "Recovered Gold (kg)", "Lead/Cadmium Prevented (Tons)", "CO₂ Avoided (100 Tons)"],
         "Quantity": [recovered_copper_tons, recovered_gold_kg, heavy_metals_prevented_tons, co2_saved_tons / 100.0]
@@ -746,7 +827,7 @@ with tab2:
         title="<b>Simulated Strategic Material Recovery & Pollution Abatement Yield</b>"
     )
     fig_metals.update_layout(
-        height=380,
+        height=360,
         margin=dict(l=30, r=30, t=50, b=30),
         showlegend=False,
         paper_bgcolor="rgba(0,0,0,0)",
@@ -755,25 +836,20 @@ with tab2:
     st.plotly_chart(fig_metals, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# TAB 3: UNIVARIATE & OUTLIER DISTRIBUTIONS
+# TAB 4: DISTRIBUTIONS & OUTLIERS
 # ------------------------------------------------------------------------------
-with tab3:
+with tab_univariate:
     st.markdown("### Univariate Distributions & Outlier Spread")
-    st.caption("Analyzing distribution skewness, log-transformed profiles, and extreme high-tonnage metro outliers.")
-    
     col_u1, col_u2 = st.columns(2)
     waste_metric = "Daily_Waste_Generation_Tons"
     
-    with col_u1:
+    with col_u1.container(border=True):
         st.subheader("Distribution & Density")
         use_log = st.checkbox("Apply Log Scale (X-axis)", value=False)
-        
         plot_data = filtered_20k[waste_metric].dropna()
+        xlab = f"log(1 + {waste_metric})" if use_log else waste_metric
         if use_log:
             plot_data = np.log1p(plot_data)
-            xlab = f"log(1 + {waste_metric})"
-        else:
-            xlab = waste_metric
             
         fig_hist = px.histogram(
             x=plot_data,
@@ -783,15 +859,10 @@ with tab3:
             labels={"x": xlab, "y": "Frequency Count"},
             title=f"Distribution Profile of {xlab}"
         )
-        fig_hist.update_layout(
-            height=420,
-            margin=dict(l=30, r=30, t=50, b=30),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
+        fig_hist.update_layout(height=380, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_hist, use_container_width=True)
         
-    with col_u2:
+    with col_u2.container(border=True):
         st.subheader("Outlier Spread Across City Tiers")
         fig_box = px.box(
             filtered_20k,
@@ -802,161 +873,54 @@ with tab3:
             points="outliers",
             title=f"Outlier Spread Across City Tiers ({waste_metric})"
         )
-        fig_box.update_layout(
-            height=420,
-            margin=dict(l=30, r=30, t=50, b=30),
-            showlegend=False,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
+        fig_box.update_layout(height=380, margin=dict(l=20, r=20, t=40, b=20), showlegend=False, paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_box, use_container_width=True)
-        
-    st.markdown("---")
-    st.subheader("Categorical Rankings & Grouped Comparisons")
-    
-    col_c1, col_c2 = st.columns(2)
-    
-    with col_c1:
-        top_n = st.slider("Select Top N Cities to Rank", min_value=5, max_value=25, value=10)
-        top_cities_rec = (
-            wm_rec_df.groupby("City")["Waste Generated (Tons/Day)"]
-            .mean()
-            .nlargest(top_n)
-            .reset_index()
-        )
-        fig_top = px.bar(
-            top_cities_rec,
-            x="Waste Generated (Tons/Day)",
-            y="City",
-            orientation="h",
-            color="Waste Generated (Tons/Day)",
-            color_continuous_scale=[[0, "#6ee7b7"], [1, "#065f46"]],
-            title=f"Top {top_n} Cities by Mean Waste Generated (Recycling Dataset)"
-        )
-        fig_top.update_layout(
-            yaxis=dict(autorange="reversed"),
-            height=460,
-            margin=dict(l=30, r=30, t=50, b=30),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
-        st.plotly_chart(fig_top, use_container_width=True)
-        
-    with col_c2:
-        top_5_cities = wm_20k_df["City"].value_counts().head(5).index.tolist()
-        sample_city_df = wm_20k_df[wm_20k_df["City"].isin(top_5_cities)]
-        grouped_agg = sample_city_df.groupby(["City", "Waste_Type"])["Daily_Waste_Generation_Tons"].mean().reset_index()
-        
-        fig_grp = px.bar(
-            grouped_agg,
-            x="City",
-            y="Daily_Waste_Generation_Tons",
-            color="Waste_Type",
-            barmode="group",
-            title="Mean Daily Waste Generation Grouped by City & Waste Type",
-            color_discrete_sequence=ECO_PALETTE
-        )
-        fig_grp.update_layout(
-            height=460,
-            margin=dict(l=30, r=30, t=50, b=30),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
-        st.plotly_chart(fig_grp, use_container_width=True)
-        
-    if view_static_plots:
-        st.markdown("#### Original Matplotlib / Seaborn Visualizations")
-        fig_sns, axes_sns = plt.subplots(1, 2, figsize=(14, 4.5))
-        sns.histplot(data=filtered_20k, x=waste_metric, kde=True, color="teal", bins=30, ax=axes_sns[0])
-        axes_sns[0].set_title(f"Seaborn HistPlot: {waste_metric}", fontweight="bold")
-        sns.boxplot(data=filtered_20k, x=waste_metric, color="coral", ax=axes_sns[1], fliersize=3)
-        axes_sns[1].set_title(f"Seaborn BoxPlot: {waste_metric}", fontweight="bold")
-        plt.tight_layout()
-        st.pyplot(fig_sns)
-        plt.close(fig_sns)
 
 # ------------------------------------------------------------------------------
-# TAB 4: PART-TO-WHOLE & COMPOSITION
+# TAB 5: WASTE COMPOSITION
 # ------------------------------------------------------------------------------
-with tab4:
+with tab_comp:
     st.markdown("### Part-to-Whole Composition Analysis")
-    st.caption("Volumetric and proportional share of E-Waste relative to Organic, Plastic, and Industrial categories.")
-    
     col_p1, col_p2 = st.columns([5, 7])
     
-    with col_p1:
+    with col_p1.container(border=True):
         cat_counts = wm_20k_df["Waste_Type"].value_counts().reset_index()
         cat_counts.columns = ["Waste_Type", "Record_Count"]
-        
         fig_donut = px.pie(
             cat_counts,
             values="Record_Count",
             names="Waste_Type",
             hole=0.6,
-            title="<b>Proportional Share of Waste Classifications</b>",
+            title="<b>Proportional Share of Waste Classes</b>",
             color_discrete_sequence=ECO_PALETTE
         )
         fig_donut.update_traces(textposition='inside', textinfo='percent+label')
-        fig_donut.update_layout(
-            height=450,
-            margin=dict(l=20, r=20, t=50, b=20),
-            showlegend=False,
-            paper_bgcolor="rgba(0,0,0,0)"
-        )
+        fig_donut.update_layout(height=420, margin=dict(l=10, r=10, t=40, b=10), showlegend=False, paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_donut, use_container_width=True)
         
-    with col_p2:
+    with col_p2.container(border=True):
         yearly_comp = wm_20k_df.groupby(["Year", "Waste_Type"])["Daily_Waste_Generation_Tons"].sum().reset_index()
         fig_area = px.bar(
             yearly_comp,
             x="Year",
             y="Daily_Waste_Generation_Tons",
             color="Waste_Type",
-            title="<b>Longitudinal Tonnage Shift Across Categories (2015 - 2026)</b>",
+            title="<b>Longitudinal Tonnage Shift (2015 - 2026)</b>",
             color_discrete_sequence=ECO_PALETTE
         )
-        fig_area.update_layout(
-            height=450,
-            margin=dict(l=20, r=20, t=50, b=20),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
+        fig_area.update_layout(height=420, margin=dict(l=10, r=10, t=40, b=10), paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_area, use_container_width=True)
-        
-    st.subheader("Category Volumetric Breakdown")
-    cat_summary = wm_20k_df.groupby("Waste_Type").agg(
-        Total_Tons=("Daily_Waste_Generation_Tons", "sum"),
-        Mean_Daily_Tons=("Daily_Waste_Generation_Tons", "mean"),
-        Median_Daily_Tons=("Daily_Waste_Generation_Tons", "median"),
-        Avg_Recycling_Rate=("Recycling_Rate", "mean"),
-        Avg_Collection_Eff=("Collection_Efficiency_Percentage", "mean")
-    ).sort_values(by="Total_Tons", ascending=False).reset_index()
-    
-    st.dataframe(
-        cat_summary.style.format({
-            "Total_Tons": "{:,.1f}",
-            "Mean_Daily_Tons": "{:.2f}",
-            "Median_Daily_Tons": "{:.2f}",
-            "Avg_Recycling_Rate": "{:.1f}%",
-            "Avg_Collection_Eff": "{:.1f}%"
-        }),
-        use_container_width=True
-    )
 
 # ------------------------------------------------------------------------------
-# TAB 5: REGRESSION & MULTIVARIATE ANALYSIS
+# TAB 6: REGRESSION & TRENDS
 # ------------------------------------------------------------------------------
-with tab5:
+with tab_regression:
     st.markdown("### Bivariate, Regression & Multivariate Bubble Analysis")
-    st.caption("Uncovering non-linear relationships between population density, urbanization, and daily waste generation.")
-    
     col_m1, col_m2 = st.columns(2)
     
-    with col_m1:
-        st.subheader("Linear Trend & Regression")
+    with col_m1.container(border=True):
         sample_size = min(1500, len(filtered_20k))
         sample_reg = filtered_20k.sample(n=sample_size, random_state=42) if sample_size > 0 else filtered_20k
-        
         fig_reg = px.scatter(
             sample_reg,
             x="Population_Density",
@@ -968,18 +932,11 @@ with tab5:
             title=f"OLS Trend: Population Density vs Daily Waste (n={sample_size})",
             labels={"Population_Density": "Population Density (People/km²)", "Daily_Waste_Generation_Tons": "Daily Waste (Tons)"}
         )
-        fig_reg.update_layout(
-            height=450,
-            margin=dict(l=30, r=30, t=50, b=30),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
+        fig_reg.update_layout(height=420, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_reg, use_container_width=True)
         
-    with col_m2:
-        st.subheader("Multivariate 4D Bubble Chart")
+    with col_m2.container(border=True):
         sample_bubble = filtered_20k.sample(n=min(400, len(filtered_20k)), random_state=42) if len(filtered_20k) > 0 else filtered_20k
-        
         fig_bubble = px.scatter(
             sample_bubble,
             x="Population_Density",
@@ -994,63 +951,25 @@ with tab5:
             labels={"Population_Density": "Density (People/km²)", "Daily_Waste_Generation_Tons": "Daily Waste (Tons)"},
             color_discrete_sequence=ECO_PALETTE
         )
-        fig_bubble.update_layout(
-            height=450,
-            margin=dict(l=30, r=30, t=50, b=30),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
+        fig_bubble.update_layout(height=420, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_bubble, use_container_width=True)
-        
-    st.markdown("---")
-    st.subheader("Statistical Kernel: Violin & Quartile Distributions Across City Tiers")
-    
-    top_cats = wm_20k_df["City_Category"].value_counts().nlargest(4).index.tolist()
-    violin_df = filtered_20k[filtered_20k["City_Category"].isin(top_cats)]
-    
-    fig_violin = px.violin(
-        violin_df,
-        x="City_Category",
-        y="Daily_Waste_Generation_Tons",
-        color="City_Category",
-        box=True,
-        points="outliers",
-        title="Violin Kernel & Quartiles of Daily Waste Across City Tiers",
-        color_discrete_sequence=ECO_PALETTE
-    )
-    fig_violin.update_layout(
-        height=420,
-        margin=dict(l=30, r=30, t=50, b=30),
-        showlegend=False,
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)"
-    )
-    st.plotly_chart(fig_violin, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# TAB 6: CORRELATION & COLLINEARITY
+# TAB 7: CORRELATION HEATMAP
 # ------------------------------------------------------------------------------
-with tab6:
-    st.markdown("### Correlation Matrix Heatmap & Joint Densities")
-    st.caption("Pairwise collinearity across municipal indices, demographics, collection infrastructure, and air quality.")
-    
+with tab_corr:
+    st.markdown("### Correlation Matrix Heatmap & Collinearity")
     numeric_candidates = [
-        "Population",
-        "Population_Density",
-        "Urbanization_Rate",
-        "Daily_Waste_Generation_Tons",
-        "Collection_Efficiency_Percentage",
-        "Recycling_Rate",
-        "Municipal_Efficiency_Score",
-        "Air_Quality_Index"
+        "Population", "Population_Density", "Urbanization_Rate",
+        "Daily_Waste_Generation_Tons", "Collection_Efficiency_Percentage",
+        "Recycling_Rate", "Municipal_Efficiency_Score", "Air_Quality_Index"
     ]
     avail_num_cols = [c for c in numeric_candidates if c in filtered_20k.columns]
     
     col_k1, col_k2 = st.columns([6, 6])
     
-    with col_k1:
+    with col_k1.container(border=True):
         corr_mat = filtered_20k[avail_num_cols].corr()
-        
         fig_heat = px.imshow(
             corr_mat,
             text_auto=".2f",
@@ -1060,14 +979,10 @@ with tab6:
             zmax=1,
             title="<b>Correlation Heatmap (Pearson)</b>"
         )
-        fig_heat.update_layout(
-            height=470,
-            margin=dict(l=30, r=30, t=50, b=30),
-            paper_bgcolor="rgba(0,0,0,0)"
-        )
+        fig_heat.update_layout(height=450, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_heat, use_container_width=True)
         
-    with col_k2:
+    with col_k2.container(border=True):
         sample_density = filtered_20k.sample(min(3000, len(filtered_20k)), random_state=42) if len(filtered_20k) > 0 else filtered_20k
         fig_density = px.density_heatmap(
             sample_density,
@@ -1079,25 +994,14 @@ with tab6:
             title="<b>Joint 2D Density: Urbanization vs Daily Waste</b>",
             labels={"Urbanization_Rate": "Urbanization Rate (%)", "Daily_Waste_Generation_Tons": "Daily Waste (Tons)"}
         )
-        fig_density.update_layout(
-            height=470,
-            margin=dict(l=30, r=30, t=50, b=30),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
+        fig_density.update_layout(height=450, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig_density, use_container_width=True)
-        
-    st.info("💡 **Key Finding**: Urbanization Rate and Population Density correlate positively with daily e-waste tonnage. Higher Municipal Efficiency Scores correlate with reduced uncollected waste, confirming the role of local governance.")
 
 # ------------------------------------------------------------------------------
-# TAB 7: GEOSPATIAL & CITY DEEP DIVE INSPECTOR
+# TAB 8: GEOSPATIAL & CITY AUDIT
 # ------------------------------------------------------------------------------
-with tab7:
-    st.markdown("### Geospatial Mapping & Interactive City Deep Dive")
-    st.caption("Explore national spatial distributions or select any Indian city for an individual waste and infrastructure audit.")
-    
-    # 1. Map of India
-    st.subheader("1. Interactive Map of Indian Urban Centers")
+with tab_geo:
+    st.markdown("### Geospatial Mapping & Interactive City Audit")
     
     city_map_data = filtered_combined.groupby(["City", "State", "Region", "Latitude", "Longitude"]).agg(
         Total_Waste=("Daily_Waste_Generation_Tons", "sum"),
@@ -1106,7 +1010,7 @@ with tab7:
         Recycling_Rate=("Recycling_Rate", "mean")
     ).reset_index()
     
-    if len(city_map_data) > 0:
+    with st.container(border=True):
         try:
             if hasattr(px, "scatter_map"):
                 fig_map = px.scatter_map(
@@ -1122,7 +1026,7 @@ with tab7:
                     zoom=3.8,
                     center=dict(lat=21.7679, lon=78.8718),
                     map_style="open-street-map",
-                    title="<b>Indian Cities: Bubble Size = Total Daily Waste, Color = Collection Efficiency (%)</b>"
+                    title="<b>Indian Cities: Bubble Size = Daily Waste, Color = Collection Efficiency (%)</b>"
                 )
                 fig_map.update_layout(height=520, margin=dict(l=10, r=10, t=40, b=10))
                 st.plotly_chart(fig_map, use_container_width=True)
@@ -1140,7 +1044,7 @@ with tab7:
                     zoom=3.8,
                     center=dict(lat=21.7679, lon=78.8718),
                     mapbox_style="open-street-map",
-                    title="<b>Indian Cities: Bubble Size = Total Daily Waste, Color = Collection Efficiency (%)</b>"
+                    title="<b>Indian Cities: Bubble Size = Daily Waste, Color = Collection Efficiency (%)</b>"
                 )
                 fig_map.update_layout(height=520, margin=dict(l=10, r=10, t=40, b=10))
                 st.plotly_chart(fig_map, use_container_width=True)
@@ -1148,17 +1052,13 @@ with tab7:
                 st.map(city_map_data, latitude="Latitude", longitude="Longitude", size="Total_Waste")
         except Exception:
             st.map(city_map_data, latitude="Latitude", longitude="Longitude", size="Total_Waste")
-    else:
-        st.warning("No city geospatial data matches the current filters.")
-        
+            
     st.markdown("---")
     
-    # 2. Interactive City-Level Drilldown Inspector
-    st.subheader("2. Interactive City Audit & Infrastructure Scorecard")
+    # City Audit
     available_cities = sorted(wm_20k_df["City"].dropna().unique().tolist())
-    
     selected_drill_city = st.selectbox(
-        "Select a City for Deep Dive Audit:",
+        "Select a City for Detailed Demographic & Waste Audit:",
         options=available_cities,
         index=available_cities.index("Mumbai") if "Mumbai" in available_cities else 0
     )
@@ -1167,82 +1067,38 @@ with tab7:
     city_ew = city_df[city_df["Waste_Type"] == "E-Waste"]
     
     if len(city_df) > 0:
-        city_state = city_df["State"].iloc[0]
-        city_region = city_df["Region"].iloc[0]
-        city_tier = city_df["City_Category"].iloc[0]
-        city_avg_gen = city_df["Daily_Waste_Generation_Tons"].mean()
-        city_avg_coll = city_df["Collection_Efficiency_Percentage"].mean()
-        city_avg_rec = city_df["Recycling_Rate"].mean()
-        
         c_kpi1, c_kpi2, c_kpi3, c_kpi4 = st.columns(4)
-        with c_kpi1:
-            st.metric("City Classification", f"{city_tier}", f"Region: {city_region}")
-        with c_kpi2:
-            st.metric("Mean Daily Waste", f"{city_avg_gen:.1f} Tons", f"State: {city_state}")
-        with c_kpi3:
-            st.metric("Collection Efficiency", f"{city_avg_coll:.1f}%", f"{'Above' if city_avg_coll >= 50 else 'Below'} National Baseline")
-        with c_kpi4:
-            st.metric("Formal Recycling Rate", f"{city_avg_rec:.1f}%", f"{'Good' if city_avg_rec > 50 else 'Lagging'}")
+        with c_kpi1.container(border=True):
+            st.metric("Classification", f"{city_df['City_Category'].iloc[0]}", f"Region: {city_df['Region'].iloc[0]}")
+        with c_kpi2.container(border=True):
+            st.metric("Mean Daily Waste", f"{city_df['Daily_Waste_Generation_Tons'].mean():.1f} Tons", f"State: {city_df['State'].iloc[0]}")
+        with c_kpi3.container(border=True):
+            coll_val = city_df['Collection_Efficiency_Percentage'].mean()
+            st.metric("Collection Efficiency", f"{coll_val:.1f}%", f"{'Above' if coll_val >= 50 else 'Below'} National Average")
+        with c_kpi4.container(border=True):
+            rec_val = city_df['Recycling_Rate'].mean()
+            st.metric("Formal Recycling Rate", f"{rec_val:.1f}%", f"{'Good' if rec_val > 50 else 'Lagging'}")
             
-        # City Historical Trend Chart
         if len(city_ew) > 0:
-            city_yearly = city_ew.groupby("Year")["Daily_Waste_Generation_Tons"].mean().reset_index()
-            fig_city_trend = px.line(
-                city_yearly,
-                x="Year",
-                y="Daily_Waste_Generation_Tons",
-                markers=True,
-                line_shape="spline",
-                color_discrete_sequence=["#059669"],
-                title=f"<b>Historical Daily E-Waste Generation in {selected_drill_city} (2015 – 2026)</b>"
-            )
-            fig_city_trend.update_layout(
-                height=350,
-                margin=dict(l=30, r=30, t=50, b=30),
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)"
-            )
-            st.plotly_chart(fig_city_trend, use_container_width=True)
-            
-    st.markdown("---")
-    
-    # 3. Regional Facet Analysis
-    st.subheader("3. Multi-Panel Regional Facet Analysis: E-Waste Growth Over Time")
-    ew_comb_subset = filtered_combined[filtered_combined["Waste_Type"] == "E-Waste"]
-    
-    if len(ew_comb_subset) > 0:
-        fig_facet = px.scatter(
-            ew_comb_subset,
-            x="Year",
-            y="Daily_Waste_Generation_Tons",
-            facet_col="Region",
-            facet_col_wrap=3,
-            color="Region",
-            hover_name="City",
-            opacity=0.75,
-            trendline="lowess",
-            title="E-Waste Generation Curves by Region (2015 - 2026)",
-            color_discrete_sequence=ECO_PALETTE
-        )
-        fig_facet.update_layout(
-            height=550,
-            margin=dict(l=20, r=20, t=60, b=20),
-            showlegend=False,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)"
-        )
-        st.plotly_chart(fig_facet, use_container_width=True)
-    else:
-        st.warning("No E-waste observations match current filter criteria.")
+            with st.container(border=True):
+                city_yearly = city_ew.groupby("Year")["Daily_Waste_Generation_Tons"].mean().reset_index()
+                fig_city_trend = px.line(
+                    city_yearly,
+                    x="Year",
+                    y="Daily_Waste_Generation_Tons",
+                    markers=True,
+                    color_discrete_sequence=["#059669"],
+                    title=f"<b>Historical Daily E-Waste Generation in {selected_drill_city} (2015 – 2026)</b>"
+                )
+                fig_city_trend.update_layout(height=320, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)")
+                st.plotly_chart(fig_city_trend, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# TAB 8: DATA EXPLORER & EXPORT
+# TAB 9: DATA EXPLORER & EXPORT
 # ------------------------------------------------------------------------------
-with tab8:
+with tab_explorer:
     st.markdown("### Interactive Data Explorer & Export")
-    st.caption("Inspect filtered observations, search by city or state, and export tailored slices for research.")
-    
-    search_term = st.text_input("Quick Search (City, State, or Waste Type)", placeholder="e.g. Mumbai, E-Waste, Delhi...")
+    search_term = st.text_input("Quick Search (City, State, or Waste Type)", placeholder="Type to filter records...")
     
     display_df = filtered_20k.copy()
     if search_term:
@@ -1262,6 +1118,7 @@ with tab8:
     ]
     show_cols = st.multiselect("Customize Columns to Display", options=display_df.columns.tolist(), default=default_show_cols)
     
+    # PRO TIP 10: Streamlit Dataframe with Native Column Config
     st.dataframe(display_df[show_cols].head(500), use_container_width=True)
     
     csv_bytes = display_df[show_cols].to_csv(index=False).encode('utf-8')
@@ -1270,27 +1127,22 @@ with tab8:
         data=csv_bytes,
         file_name=f"ewaste_analysis_filtered_{selected_years[0]}_{selected_years[1]}.csv",
         mime="text/csv",
+        icon=":material/download:",
         use_container_width=True
     )
-    
-    st.markdown("#### Summary Statistics of Filtered Slice")
-    st.dataframe(display_df[show_cols].describe().T, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# TAB 9: POST-MORTEM & POLICY FRAMEWORK
+# TAB 10: POLICY & ENGINEERING
 # ------------------------------------------------------------------------------
-with tab9:
+with tab_notes:
     st.markdown("### Data Engineering Post-Mortem & Policy Framework")
-    
     col_pm1, col_pm2 = st.columns(2)
     
-    with col_pm1:
+    with col_pm1.container(border=True):
         st.markdown("""
         #### Data Engineering Post-Mortem: What Broke & Why
         
-        In the original exploratory notebook, execution halted in Cell 3 due to a **Column Label Inconsistency**:
-        
-        * **The Problem:** The recycling dataset (`Waste_Management_and_Recycling_India.csv`) designated the urban area under `'City/District'`, whereas the longitudinal 20K dataset labeled it `'City'`.
+        * **The Problem:** The recycling dataset designated the urban area under `'City/District'`, whereas the longitudinal 20K dataset labeled it `'City'`.
         * **The Bug:** A downstream Seaborn call attempted to reference `'City/District'` inside `wm_20k_df`, throwing a `KeyError: 'City/District'`.
         * **The Resolution:** Harmonized headers immediately upon ingest:
           ```python
@@ -1300,11 +1152,9 @@ with tab9:
         * **Relational Integrity:** Implemented an inner join between `wm_20k_df` and `cities_master.csv` on `['City', 'State']`, pulling geographic coordinates (`Latitude`, `Longitude`) and special demographic flags (`Is_Tourist`, `Is_Hill_Station`).
         """)
         
-    with col_pm2:
+    with col_pm2.container(border=True):
         st.markdown("""
         #### Evidence-Based Policy Framework
-        
-        Based on empirical findings from the 25,200+ longitudinal records:
         
         1. **The Core Crisis is Collection, Not Generation:**
            Generation inevitably scales with consumer electronics adoption (7.56% CAGR). However, collection efficiency remains frozen at ~50%. Policies targeting consumer awareness without collection infrastructure will fail.
@@ -1318,8 +1168,8 @@ with tab9:
         
     st.markdown("---")
     st.markdown("""
-    <div style="text-align:center; padding:1.5rem 0; color:#64748b; font-size:0.9rem;">
-        <strong>India E-Waste Growth Analytics & Circularity Project</strong><br>
+    <div style="text-align:center; padding:1.2rem 0; color:#64748b; font-size:0.9rem;">
+        <strong>India E-Waste Growth Analytics & Peer Benchmarking Platform</strong><br>
         Built by <strong>Ruhaan Joshi (24101C0057)</strong>, <strong>Om Thakur (24101C0041)</strong>, and <strong>Rudra Jain (24101C0062)</strong><br>
         Department of Information Technology • Batch INFT-C
     </div>
