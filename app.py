@@ -773,23 +773,52 @@ with tab6:
         Recycling_Rate=("Recycling_Rate", "mean")
     ).reset_index()
     
-    fig_map = px.scatter_mapbox(
-        city_map_data,
-        lat="Latitude",
-        lon="Longitude",
-        hover_name="City",
-        hover_data=["State", "Region", "Total_Waste", "Collection_Eff", "Recycling_Rate"],
-        size="Total_Waste",
-        color="Collection_Eff",
-        color_continuous_scale="Viridis",
-        size_max=35,
-        zoom=3.8,
-        center=dict(lat=21.7679, lon=78.8718),
-        mapbox_style="carto-positron",
-        title="<b>Indian Cities: Bubble Size = Daily Waste, Color = Collection Efficiency (%)</b>"
-    )
-    fig_map.update_layout(height=520, margin=dict(l=10, r=10, t=40, b=10))
-    st.plotly_chart(fig_map, use_container_width=True)
+    if len(city_map_data) > 0:
+        try:
+            if hasattr(px, "scatter_map"):
+                # Plotly 6.0+ uses MapLibre with scatter_map
+                fig_map = px.scatter_map(
+                    city_map_data,
+                    lat="Latitude",
+                    lon="Longitude",
+                    hover_name="City",
+                    hover_data=["State", "Region", "Total_Waste", "Collection_Eff", "Recycling_Rate"],
+                    size="Total_Waste",
+                    color="Collection_Eff",
+                    color_continuous_scale="Viridis",
+                    size_max=35,
+                    zoom=3.8,
+                    center=dict(lat=21.7679, lon=78.8718),
+                    map_style="open-street-map",
+                    title="<b>Indian Cities: Bubble Size = Daily Waste, Color = Collection Efficiency (%)</b>"
+                )
+                fig_map.update_layout(height=520, margin=dict(l=10, r=10, t=40, b=10))
+                st.plotly_chart(fig_map, use_container_width=True)
+            elif hasattr(px, "scatter_mapbox"):
+                # Plotly 5.x fallback
+                fig_map = px.scatter_mapbox(
+                    city_map_data,
+                    lat="Latitude",
+                    lon="Longitude",
+                    hover_name="City",
+                    hover_data=["State", "Region", "Total_Waste", "Collection_Eff", "Recycling_Rate"],
+                    size="Total_Waste",
+                    color="Collection_Eff",
+                    color_continuous_scale="Viridis",
+                    size_max=35,
+                    zoom=3.8,
+                    center=dict(lat=21.7679, lon=78.8718),
+                    mapbox_style="open-street-map",
+                    title="<b>Indian Cities: Bubble Size = Daily Waste, Color = Collection Efficiency (%)</b>"
+                )
+                fig_map.update_layout(height=520, margin=dict(l=10, r=10, t=40, b=10))
+                st.plotly_chart(fig_map, use_container_width=True)
+            else:
+                st.map(city_map_data, latitude="Latitude", longitude="Longitude", size="Total_Waste")
+        except Exception:
+            st.map(city_map_data, latitude="Latitude", longitude="Longitude", size="Total_Waste")
+    else:
+        st.warning("No city geospatial data available for current filters.")
     
     st.markdown("---")
     
