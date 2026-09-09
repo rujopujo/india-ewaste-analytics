@@ -130,17 +130,19 @@ Follow these exact steps to publish your code to GitHub and deploy a public live
 ## 📂 Repository File Structure
 
 ```text
-ewem-dataanalysis/
+india-ewaste-analytics/
+├── .streamlit/
+│   └── config.toml                         # Custom emerald/teal theme and server settings
+├── data/
+│   ├── Waste_Management_India_20K.csv          # 25,200+ longitudinal records (2015-2026)
+│   ├── Waste_Management_and_Recycling_India.csv# Municipal recycling dataset
+│   └── cities_master.csv                       # Master Indian city metadata (coordinates, regions)
+├── notebooks/
+│   └── ewem-dataanalysis.ipynb                 # Reference research Jupyter Notebook
 ├── app.py                                  # Main Streamlit dashboard application
 ├── requirements.txt                        # Production Python dependencies
 ├── .gitignore                              # Clean git tracking rules
-├── README.md                               # Project documentation & deployment guide
-├── .streamlit/
-│   └── config.toml                         # Custom emerald/teal theme and server settings
-├── cities_master.csv                       # Master Indian city metadata (coordinates, regions)
-├── Waste_Management_and_Recycling_India.csv# Municipal recycling dataset
-├── Waste_Management_India_20K.csv          # 25,200+ longitudinal records (2015-2026)
-└── ewem-dataanalysis.ipynb                 # Reference research Jupyter Notebook
+└── README.md                               # Project documentation & deployment guide
 ```
 
 ---

@@ -120,9 +120,23 @@ st.markdown("""
 def load_and_preprocess_data():
     base_path = os.path.dirname(os.path.abspath(__file__))
     
-    path_cities = os.path.join(base_path, "cities_master.csv")
-    path_recycling = os.path.join(base_path, "Waste_Management_and_Recycling_India.csv")
-    path_20k = os.path.join(base_path, "Waste_Management_India_20K.csv")
+    def resolve_dataset_path(filename):
+        candidates = [
+            os.path.join(base_path, "data", filename),
+            os.path.join(base_path, filename),
+            os.path.join(os.getcwd(), "data", filename),
+            os.path.join(os.getcwd(), filename),
+            os.path.join(base_path, "..", "data", filename),
+            os.path.join(base_path, "..", filename),
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                return c
+        return os.path.join(base_path, filename)
+    
+    path_cities = resolve_dataset_path("cities_master.csv")
+    path_recycling = resolve_dataset_path("Waste_Management_and_Recycling_India.csv")
+    path_20k = resolve_dataset_path("Waste_Management_India_20K.csv")
     
     cities_df = pd.read_csv(path_cities)
     wm_rec_df = pd.read_csv(path_recycling)
