@@ -213,90 +213,124 @@ st.markdown("""
     }
 
     /* ==========================================================================
-       PROMINENT STREAMLIT TABS NAVIGATION BAR (HIGH VISIBILITY & SIZE)
+       PROMINENT STREAMLIT TABS NAVIGATION BAR (ULTRA-HIGH VISIBILITY & SIZE)
        ========================================================================== */
-    div[data-testid="stTabs"] {
-        margin-top: 0.8rem;
-        margin-bottom: 2rem;
+    .stTabs,
+    [data-testid="stTabs"],
+    div.stTabs {
+        margin-top: 1rem !important;
+        margin-bottom: 2rem !important;
     }
 
+    .stTabs [role="tablist"],
+    [data-testid="stTabs"] [role="tablist"],
+    [data-baseweb="tab-list"],
+    div.stTabs [data-baseweb="tab-list"],
     div[data-testid="stTabs"] [data-baseweb="tab-list"] {
-        gap: 0.55rem !important;
+        gap: 0.65rem !important;
         background: #f0fdf4 !important;
-        padding: 0.65rem 0.85rem !important;
-        border-radius: 18px !important;
-        border: 2px solid #a7f3d0 !important;
-        box-shadow: 0 6px 20px -2px rgba(6, 78, 59, 0.09) !important;
+        padding: 0.75rem 0.95rem !important;
+        border-radius: 20px !important;
+        border: 2.5px solid #6ee7b7 !important;
+        box-shadow: 0 8px 24px -2px rgba(6, 78, 59, 0.12) !important;
         overflow-x: auto !important;
+        margin-bottom: 1.5rem !important;
     }
 
-    div[data-testid="stTabs"] button[data-baseweb="tab"] {
-        padding: 0.85rem 1.45rem !important;
-        border-radius: 12px !important;
-        font-size: 1.15rem !important;
+    .stTabs [role="tab"],
+    .stTabs button,
+    [data-testid="stTabs"] [role="tab"],
+    [data-testid="stTabs"] button,
+    [data-baseweb="tab"],
+    button[data-baseweb="tab"] {
+        padding: 0.95rem 1.65rem !important;
+        border-radius: 14px !important;
+        font-size: 1.25rem !important;
         font-weight: 700 !important;
         color: #064e3b !important;
         background-color: #ffffff !important;
-        border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
-        box-shadow: 0 2px 8px rgba(6, 78, 59, 0.05) !important;
+        border: 2px solid rgba(16, 185, 129, 0.35) !important;
+        box-shadow: 0 3px 10px rgba(6, 78, 59, 0.07) !important;
         transition: all 0.22s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
         white-space: nowrap !important;
-        min-height: 52px !important;
+        min-height: 56px !important;
+        height: auto !important;
     }
 
-    div[data-testid="stTabs"] button[data-baseweb="tab"]:hover {
+    .stTabs [role="tab"]:hover,
+    .stTabs button:hover,
+    [data-testid="stTabs"] button:hover,
+    [data-baseweb="tab"]:hover {
         background-color: #ecfdf5 !important;
         color: #047857 !important;
         border-color: #10b981 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px -2px rgba(16, 185, 129, 0.25) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 20px -2px rgba(16, 185, 129, 0.3) !important;
     }
 
-    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
+    .stTabs [role="tab"][aria-selected="true"],
+    .stTabs button[aria-selected="true"],
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"],
+    [data-testid="stTabs"] button[aria-selected="true"],
+    [data-baseweb="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%) !important;
         color: #ffffff !important;
         font-weight: 800 !important;
         border-color: #047857 !important;
-        box-shadow: 0 6px 20px -2px rgba(5, 150, 105, 0.45) !important;
-        transform: translateY(-2px);
+        box-shadow: 0 8px 24px -2px rgba(5, 150, 105, 0.5) !important;
+        transform: translateY(-2px) !important;
     }
 
-    div[data-testid="stTabs"] button[data-baseweb="tab"] p {
-        font-size: 1.15rem !important;
+    .stTabs [role="tab"] p,
+    .stTabs button p,
+    [data-testid="stTabs"] [role="tab"] p,
+    [data-testid="stTabs"] button p,
+    .stTabs [data-testid="stMarkdownContainer"] p,
+    [data-baseweb="tab"] p {
+        font-size: 1.25rem !important;
         font-weight: inherit !important;
         margin: 0 !important;
         line-height: 1.35 !important;
         letter-spacing: -0.01em !important;
     }
 
-    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] p,
-    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] span {
+    .stTabs [role="tab"][aria-selected="true"] p,
+    .stTabs button[aria-selected="true"] p,
+    .stTabs [role="tab"][aria-selected="true"] span,
+    .stTabs button[aria-selected="true"] span,
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"] p {
         color: #ffffff !important;
+        font-weight: 800 !important;
     }
 
-    div[data-testid="stTabs"] button[data-baseweb="tab"] span[data-testid="stIcon"],
-    div[data-testid="stTabs"] button[data-baseweb="tab"] span.material-symbols-rounded {
-        font-size: 1.4rem !important;
+    .stTabs [role="tab"] span[data-testid="stIcon"],
+    .stTabs [role="tab"] span.material-symbols-rounded,
+    .stTabs [role="tab"] svg,
+    .stTabs button span {
+        font-size: 1.5rem !important;
         vertical-align: -0.18em !important;
-        margin-right: 0.4rem !important;
+        margin-right: 0.45rem !important;
     }
 
     /* Hide default faint underline border */
-    div[data-testid="stTabs"] div[data-baseweb="tab-highlight"],
-    div[data-testid="stTabs"] div[data-baseweb="tab-border"] {
+    div[data-baseweb="tab-highlight"],
+    div[data-baseweb="tab-border"],
+    .stTabs [data-baseweb="tab-highlight"],
+    .stTabs [data-baseweb="tab-border"] {
         display: none !important;
     }
 
     /* Overflow navigation buttons */
-    div[data-testid="stTabs"] [data-baseweb="tab-list"] ~ button,
+    .stTabs [role="tablist"] ~ button,
+    [data-baseweb="tab-list"] ~ button,
     div[data-testid="stTabs"] button[aria-label*="scroll"] {
         background-color: #ffffff !important;
-        border: 2px solid #a7f3d0 !important;
+        border: 2px solid #6ee7b7 !important;
         border-radius: 12px !important;
         color: #064e3b !important;
-        padding: 0.5rem 0.6rem !important;
-        font-size: 1.25rem !important;
-        box-shadow: 0 2px 8px rgba(6, 78, 59, 0.08) !important;
+        padding: 0.5rem 0.65rem !important;
+        font-size: 1.3rem !important;
+        box-shadow: 0 2px 10px rgba(6, 78, 59, 0.1) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -562,7 +596,8 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ==============================================================================
 # MAIN TABS ARCHITECTURE WITH MATERIAL ICONS
 # ==============================================================================
-tab_peers, tab_overview, tab_sim, tab_univariate, tab_comp, tab_regression, tab_corr, tab_geo, tab_explorer, tab_notes = st.tabs([
+tab_group, tab_peers, tab_overview, tab_sim, tab_univariate, tab_comp, tab_regression, tab_corr, tab_geo, tab_explorer, tab_notes = st.tabs([
+    ":material/groups: Group No.: 24",
     ":material/compare_arrows: Peer Benchmarking",
     ":material/query_stats: Overview & Growth",
     ":material/eco: Eco-Policy Simulator",
@@ -574,6 +609,78 @@ tab_peers, tab_overview, tab_sim, tab_univariate, tab_comp, tab_regression, tab_
     ":material/table_view: Data Explorer",
     ":material/policy: Policy & Engineering"
 ])
+
+# ------------------------------------------------------------------------------
+# TAB 0: GROUP NO.: 24 - ACADEMIC DOSSIER & FACULTY NAVIGATION
+# ------------------------------------------------------------------------------
+with tab_group:
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #022c22 0%, #064e3b 40%, #059669 100%); padding: 2rem 2.4rem; border-radius: 20px; color: white; margin-bottom: 1.8rem; box-shadow: 0 12px 28px -4px rgba(5, 150, 105, 0.3); border: 1px solid rgba(52, 211, 153, 0.3);">
+        <div style="display:inline-flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.2); padding:0.4rem 1rem; border-radius:9999px; font-weight:700; font-size:0.9rem; margin-bottom:0.8rem; border:1px solid rgba(255,255,255,0.35);">
+            <span>🎓</span> Academic Project Dossier
+        </div>
+        <h2 style="margin:0 0 0.5rem 0; font-size:2.3rem; font-weight:800; color:#ffffff; letter-spacing:-0.02em;">Group No.: 24 — INFT-C Batch 3</h2>
+        <p style="font-size:1.1rem; opacity:0.95; margin:0; line-height:1.6; max-width:880px;">
+            Department of Information Technology • Longitudinal E-Waste Growth Analytics & Circular Policy Modeling Platform (2015–2026)
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_g1, col_g2, col_g3 = st.columns(3)
+
+    with col_g1.container(border=True):
+        st.markdown("""
+        <div style="text-align:center; padding:0.8rem 0;">
+            <div style="font-size:2.6rem; margin-bottom:0.3rem;">👨‍💻</div>
+            <h3 style="margin:0; font-size:1.35rem; color:#064e3b; font-weight:800;">Ruhaan Joshi</h3>
+            <p style="margin:0.25rem 0; font-size:1.05rem; font-weight:700; color:#059669;">Roll No: <code>24101C0057</code></p>
+            <p style="margin:0.4rem 0 0 0; font-size:0.88rem; color:#64748b;">Department of Information Technology<br>INFT-C Batch 3</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_g2.container(border=True):
+        st.markdown("""
+        <div style="text-align:center; padding:0.8rem 0;">
+            <div style="font-size:2.6rem; margin-bottom:0.3rem;">👨‍💻</div>
+            <h3 style="margin:0; font-size:1.35rem; color:#064e3b; font-weight:800;">Om Thakur</h3>
+            <p style="margin:0.25rem 0; font-size:1.05rem; font-weight:700; color:#059669;">Roll No: <code>24101C0041</code></p>
+            <p style="margin:0.4rem 0 0 0; font-size:0.88rem; color:#64748b;">Department of Information Technology<br>INFT-C Batch 3</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_g3.container(border=True):
+        st.markdown("""
+        <div style="text-align:center; padding:0.8rem 0;">
+            <div style="font-size:2.6rem; margin-bottom:0.3rem;">👨‍💻</div>
+            <h3 style="margin:0; font-size:1.35rem; color:#064e3b; font-weight:800;">Rudra Jain</h3>
+            <p style="margin:0.25rem 0; font-size:1.05rem; font-weight:700; color:#059669;">Roll No: <code>24101C0062</code></p>
+            <p style="margin:0.4rem 0 0 0; font-size:0.88rem; color:#64748b;">Department of Information Technology<br>INFT-C Batch 3</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col_sum1, col_sum2 = st.columns(2)
+    with col_sum1.container(border=True):
+        st.markdown("""
+        #### 📌 Executive Project Highlights
+        * **Longitudinal Dataset:** 25,200+ municipal observations from 2015 to 2026 across Indian urban centers.
+        * **National Growth Rate:** **+7.56% CAGR** (770.16 tons/day in 2015 → 1,716.08 tons/day in 2026).
+        * **Metropolitan Disparity:** Metros average **141.32 tons/day**, vs **1.01 tons/day** in Tier-3 cities (~140x divergence).
+        * **Infrastructure Bottleneck:** Collection efficiency remains stagnant at ~50%, with >50% leaking into the informal sector.
+        """)
+
+    with col_sum2.container(border=True):
+        st.markdown("""
+        #### 🧭 Faculty Platform Roadmap
+        Click any tab above to inspect the research models:
+        * **⇄ Peer Benchmarking:** Normalized comparative divergence curves indexed to baseline (1.0).
+        * **📈 Overview & Growth:** Macro daily tonnage trajectories, state rankings, and conveyor model.
+        * **🌱 Eco-Policy Simulator:** Interactive policy what-if simulator projecting recovery yields.
+        * **📊 Distributions & Outliers:** Skewness, log density distributions, and city tier boxplots.
+        * **🗺️ Geospatial & City Audit:** India spatial mapping and individual municipal scorecards.
+        * **📄 Data Explorer:** Paginated record inspector with one-click filtered CSV export.
+        """)
 
 # ------------------------------------------------------------------------------
 # PRO TIP 7: SIGNATURE PEER BENCHMARKING ENGINE (FANILO'S PRO METHOD)
