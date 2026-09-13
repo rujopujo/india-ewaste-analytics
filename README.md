@@ -21,6 +21,7 @@
 
 * **Department:** Department of Information Technology
 * **Cohort / Batch:** INFT-C Batch 3
+* **Project Group:** Group No.: 24
 * **Project Team:**
   * **Ruhaan Joshi** — Roll No: `24101C0057`
   * **Om Thakur** — Roll No: `24101C0041`

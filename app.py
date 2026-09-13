@@ -391,6 +391,7 @@ st.markdown("""
         <span class="badge">Ruhaan Joshi (24101C0057)</span>
         <span class="badge">Om Thakur (24101C0041)</span>
         <span class="badge">Rudra Jain (24101C0062)</span>
+        <span class="badge">Group No.: 24</span>
         <span class="badge">INFT-C Batch 3</span>
         <span class="badge">2015 – 2026 Longitudinal Study</span>
         <span class="badge">25,200+ Municipal Records</span>
@@ -1170,7 +1171,7 @@ with tab_notes:
     st.markdown("""
     <div style="text-align:center; padding:1.2rem 0; color:#64748b; font-size:0.9rem;">
         <strong>India E-Waste Growth Analytics & Peer Benchmarking Platform</strong><br>
-        Built by <strong>Ruhaan Joshi (24101C0057)</strong>, <strong>Om Thakur (24101C0041)</strong>, and <strong>Rudra Jain (24101C0062)</strong><br>
-        Department of Information Technology • Batch INFT-C
+        Group No.: 24 • Batch INFT-C • Department of Information Technology<br>
+        Built by <strong>Ruhaan Joshi (24101C0057)</strong>, <strong>Om Thakur (24101C0041)</strong>, and <strong>Rudra Jain (24101C0062)</strong>
     </div>
     """, unsafe_allow_html=True)
