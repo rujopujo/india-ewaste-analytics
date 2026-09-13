@@ -70,22 +70,34 @@ st.markdown("""
     .badge-container {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.55rem;
-        margin-top: 0.6rem;
+        gap: 0.65rem;
+        margin-top: 0.85rem;
     }
     .badge {
-        background: rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.18);
         backdrop-filter: blur(10px);
-        padding: 0.38rem 0.9rem;
+        padding: 0.48rem 1.1rem;
         border-radius: 9999px;
-        font-size: 0.82rem;
-        font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.28);
+        font-size: 0.95rem;
+        font-weight: 700;
+        border: 1px solid rgba(255, 255, 255, 0.32);
         transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        letter-spacing: -0.01em;
     }
     .badge:hover {
-        background: rgba(255, 255, 255, 0.28);
+        background: rgba(255, 255, 255, 0.32);
         transform: translateY(-2px);
+    }
+    .badge-spotlight {
+        background: #ffffff !important;
+        color: #064e3b !important;
+        font-weight: 800 !important;
+        font-size: 1.02rem !important;
+        border: 2px solid #34d399 !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+        padding: 0.52rem 1.3rem !important;
     }
 
     /* Eco Status Tag */
@@ -198,6 +210,93 @@ st.markdown("""
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: #64748b;
+    }
+
+    /* ==========================================================================
+       PROMINENT STREAMLIT TABS NAVIGATION BAR (HIGH VISIBILITY & SIZE)
+       ========================================================================== */
+    div[data-testid="stTabs"] {
+        margin-top: 0.8rem;
+        margin-bottom: 2rem;
+    }
+
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        gap: 0.55rem !important;
+        background: #f0fdf4 !important;
+        padding: 0.65rem 0.85rem !important;
+        border-radius: 18px !important;
+        border: 2px solid #a7f3d0 !important;
+        box-shadow: 0 6px 20px -2px rgba(6, 78, 59, 0.09) !important;
+        overflow-x: auto !important;
+    }
+
+    div[data-testid="stTabs"] button[data-baseweb="tab"] {
+        padding: 0.85rem 1.45rem !important;
+        border-radius: 12px !important;
+        font-size: 1.15rem !important;
+        font-weight: 700 !important;
+        color: #064e3b !important;
+        background-color: #ffffff !important;
+        border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
+        box-shadow: 0 2px 8px rgba(6, 78, 59, 0.05) !important;
+        transition: all 0.22s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        white-space: nowrap !important;
+        min-height: 52px !important;
+    }
+
+    div[data-testid="stTabs"] button[data-baseweb="tab"]:hover {
+        background-color: #ecfdf5 !important;
+        color: #047857 !important;
+        border-color: #10b981 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -2px rgba(16, 185, 129, 0.25) !important;
+    }
+
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%) !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        border-color: #047857 !important;
+        box-shadow: 0 6px 20px -2px rgba(5, 150, 105, 0.45) !important;
+        transform: translateY(-2px);
+    }
+
+    div[data-testid="stTabs"] button[data-baseweb="tab"] p {
+        font-size: 1.15rem !important;
+        font-weight: inherit !important;
+        margin: 0 !important;
+        line-height: 1.35 !important;
+        letter-spacing: -0.01em !important;
+    }
+
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] p,
+    div[data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] span {
+        color: #ffffff !important;
+    }
+
+    div[data-testid="stTabs"] button[data-baseweb="tab"] span[data-testid="stIcon"],
+    div[data-testid="stTabs"] button[data-baseweb="tab"] span.material-symbols-rounded {
+        font-size: 1.4rem !important;
+        vertical-align: -0.18em !important;
+        margin-right: 0.4rem !important;
+    }
+
+    /* Hide default faint underline border */
+    div[data-testid="stTabs"] div[data-baseweb="tab-highlight"],
+    div[data-testid="stTabs"] div[data-baseweb="tab-border"] {
+        display: none !important;
+    }
+
+    /* Overflow navigation buttons */
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] ~ button,
+    div[data-testid="stTabs"] button[aria-label*="scroll"] {
+        background-color: #ffffff !important;
+        border: 2px solid #a7f3d0 !important;
+        border-radius: 12px !important;
+        color: #064e3b !important;
+        padding: 0.5rem 0.6rem !important;
+        font-size: 1.25rem !important;
+        box-shadow: 0 2px 8px rgba(6, 78, 59, 0.08) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -388,11 +487,11 @@ st.markdown("""
     <h1>India E-Waste Growth Analytics</h1>
     <p>An interactive data analytics platform analyzing electronic waste accumulation, peer city benchmarking, municipal infrastructure bottlenecks, and circular recovery potential across Indian urban centers.</p>
     <div class="badge-container">
+        <span class="badge badge-spotlight">🏷️ Group No.: 24</span>
+        <span class="badge">INFT-C Batch 3</span>
         <span class="badge">Ruhaan Joshi (24101C0057)</span>
         <span class="badge">Om Thakur (24101C0041)</span>
         <span class="badge">Rudra Jain (24101C0062)</span>
-        <span class="badge">Group No.: 24</span>
-        <span class="badge">INFT-C Batch 3</span>
         <span class="badge">2015 – 2026 Longitudinal Study</span>
         <span class="badge">25,200+ Municipal Records</span>
     </div>
