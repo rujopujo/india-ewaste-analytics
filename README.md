@@ -187,11 +187,10 @@ The application is engineered specifically for resilient, continuous deployment 
 
 ## Interactive Analytical Modules
 
-The web dashboard (`app.py`) is structured into **dedicated analytical and briefing modules** accessed via an icon-enhanced tab navigation system:
+The web dashboard (`app.py`) is structured into **10 dedicated modules** accessed via an icon-enhanced tab navigation system:
 
 | # | Module | Material Icon | Core Methodological Functionality | Primary Visualization |
 |---|---|---|---|---|
-| **0** | **Group No.: 24** | `:material/groups:` | **Academic Dossier & Navigation Roadmap:** Dedicated landing tab presenting student profiles, roll numbers, institutional affiliations, research scope highlights, and a comprehensive platform guide for evaluating faculty. | Student attribution cards & executive summary briefing |
 | **1** | **Peer Benchmarking** | `:material/compare_arrows:` | **Normalized Multi-City Growth Divergence:** Indexes generation curves to baseline (1.0). Computes each city's trajectory against the composite average of all *other* selected peer cities. | Layered Altair Line & Area Charts with interactive tooltips |
 | **2** | **Overview & Growth** | `:material/query_stats:` | **Macro Longitudinal Trajectories:** Analyzes aggregate daily tonnage alongside per-center averages from 2015 to 2026. Computes 11-year CAGR and state rankings. | Dual-axis Plotly line plots & horizontal sorted bar charts |
 | **3** | **Eco-Policy Simulator** | `:material/eco:` | **Circular Economy Scenario Modeling:** Interactive what-if policy playground. Adjusts collection targets (%), recycling rates (%), and buyback subsidies (₹/device) to simulate material and financial yields. | Dynamic KPI metric cards with recovery yield indicators |
